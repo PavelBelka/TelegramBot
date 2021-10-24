@@ -1,7 +1,4 @@
-import asyncio
-import psycopg
 from psycopg import sql
-from psycopg_pool import AsyncConnectionPool
 
 class Database:
     @staticmethod
