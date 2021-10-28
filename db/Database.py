@@ -1,6 +1,18 @@
 from psycopg import sql
 
 class Database:
+    def create_pool(self, pool):
+        self._pool = pool
+
+    async def delete_pool(self):
+        await self._pool.close()
+
+    async def create_connection(self):
+        return await self._pool.getconn()
+
+    async def delete_connection(self, connect):
+        return await self._pool.putconn(connect)
+
     @staticmethod
     def create_cursor(connection):
         cursor = connection.cursor()

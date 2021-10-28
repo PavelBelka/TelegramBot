@@ -19,11 +19,11 @@ class TelegramBot:
 class Connect:
     pass
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    conn = psycopg2.connect(dbname='FinBot', user='telefinbot', password='Yakov2020', host='localhost')
-    new_bot = Bot(token="2008283464:AAFvmqKxp6XJQhGD7cKx2VE55FBKo6qV628")
-    dp = Dispatcher(new_bot)
-    telegram = TelegramBot(dp, new_bot)
-    telegram.message_register()
-    executor.start_polling(dp, skip_updates=True)
+#if __name__ == "__main__":
+#    logging.basicConfig(level=logging.INFO)
+#    conn = psycopg2.connect(dbname='FinBot', user='telefinbot', password='Yakov2020', host='localhost')
+#    new_bot = Bot(token="2008283464:AAFvmqKxp6XJQhGD7cKx2VE55FBKo6qV628")
+#   dp = Dispatcher(new_bot)
+#    telegram = TelegramBot(dp, new_bot)
+#    telegram.message_register()
+#    executor.start_polling(dp, skip_updates=True)
