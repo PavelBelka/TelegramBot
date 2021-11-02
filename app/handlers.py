@@ -1,10 +1,11 @@
 from aiogram import types
-from aiogram.dispatcher.filters import CommandStart, CommandHelp
+from aiogram.dispatcher.filters import CommandStart, CommandHelp, RegexpCommandsFilter
 from preload import dp, db
 from middleware.throttling import rate_limit
+from app.regexp import command_record
 
 @dp.message_handler(CommandStart())
-@rate_limit(60, 'start')
+@rate_limit(4, 'start')
 async def send_welcome(message: types.Message):
     conect = await db.create_connection()
     cur = db.create_cursor(conect)
@@ -20,8 +21,12 @@ async def send_welcome(message: types.Message):
     await db.delete_connection(conect)
 
 @dp.message_handler(CommandHelp())
-@rate_limit(60, 'help')
+@rate_limit(4, 'help')
 async def send_help(message: types.Message):
     await message.answer("Список комманд для управления:\n"
                          "1. /start - начать работу,\n"
                          "2. /help - помощь")
+
+@dp.message_handler(regexp=command_record)
+async def record(message: types.Message):
+    await message.answer("Внес запись: {}".format(message.text))
