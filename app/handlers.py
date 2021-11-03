@@ -4,6 +4,7 @@ from aiogram import types
 from aiogram.dispatcher.filters import CommandStart, CommandHelp
 
 from app.exceptions import IncorrectlySetCommandKeys
+from psycopg.errors import OperationalError, DataError, DatabaseError, ProgrammingError, InternalError
 from preload import dp, db
 from middleware.throttling import rate_limit
 from app.regexp import regs, regexp_insert_record
@@ -41,6 +42,6 @@ async def record(message: types.Message):
         await message.answer("Внес запись: {}".format(message.text))
     except IncorrectlySetCommandKeys:
         await message.answer("Неверная запись! Проверьте и запишите снова.")
-    except Exception:
+    except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
         logging.exception(f"Database write error: user_id={message.from_user.id}; record=message.text.")
         await message.answer("Не удалось внести запись!")
