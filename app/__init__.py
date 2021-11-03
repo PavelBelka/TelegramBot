@@ -1,4 +1,4 @@
 from .handlers import dp
-from .regexp import command_record
+from .regexp import regs
 
 __all__ = ["dp"]

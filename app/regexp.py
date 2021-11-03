@@ -13,7 +13,7 @@ def regexp_insert_record(text):
             command.append(found.group())
         else:
             command.append(None)
-    if command[0] is not None or command[1] is not None:
+    if command[0] is not None and command[1] is not None:
         if command[0].lower() == "оплата" or command[0].lower() == "расход" or command[0].lower() == "покупка":
             come = False
         elif command[0].lower() == "доход":
