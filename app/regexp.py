@@ -1,4 +1,5 @@
 import datetime, re
+from app.exceptions import IncorrectlySetCommandKeys
 
 categories = ("Common", "Food", "Transport", "Utilities", "Salary")
 regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+', r'(Общее|Еда|Транспорт|Бытовые|Зарплата)',
@@ -50,4 +51,4 @@ def regexp_insert_record(text):
             print("result_date: ", result_date)
         return come, type_cat, result_date, command[1]
     else:
-        raise IncorrectlySetCommandKeys()
+        raise IncorrectlySetCommandKeys

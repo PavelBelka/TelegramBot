@@ -1,7 +1,9 @@
 import logging
 
 from aiogram import types
-from aiogram.dispatcher.filters import CommandStart, CommandHelp, RegexpCommandsFilter
+from aiogram.dispatcher.filters import CommandStart, CommandHelp
+
+from app.exceptions import IncorrectlySetCommandKeys
 from preload import dp, db
 from middleware.throttling import rate_limit
 from app.regexp import regs, regexp_insert_record
@@ -37,6 +39,8 @@ async def record(message: types.Message):
         inc, categ, clock, amo = regexp_insert_record(message.text)
         await db.insert_record(cur, str(message.from_user.id), clock, inc, categ, amo)
         await message.answer("Внес запись: {}".format(message.text))
+    except IncorrectlySetCommandKeys:
+        await message.answer("Неверная запись! Проверьте и запишите снова.")
     except Exception:
         logging.exception(f"Database write error: user_id={message.from_user.id}; record=message.text.")
         await message.answer("Не удалось внести запись!")
