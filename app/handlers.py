@@ -37,7 +37,7 @@ async def record(message: types.Message):
     try:
         conect = await db.create_connection()
         cur = db.create_cursor(conect)
-        inc, categ, clock, amo = regexp_insert_record(message.text)
+        inc, categ, clock, amo = regexp_insert_record(message.text, message.date)
         await db.insert_record(cur, str(message.from_user.id), clock, inc, categ, amo)
         await message.answer("Внес запись: {}".format(message.text))
     except IncorrectlySetCommandKeys:

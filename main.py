@@ -25,7 +25,8 @@ async def on_shutdown(dbs, bot, dispatcher):
     await bot.close()
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='log.txt', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
+    logging.basicConfig(handlers=(logging.FileHandler('log.txt'), logging.StreamHandler()),
+                        level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
     logger.info("----Start program----")
     if sys.platform == "win32" and sys.version_info.minor >= 8:

@@ -6,7 +6,7 @@ regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+'
             r'(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.([0-9]{4})', r'(([01][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$')
 command = list()
 
-def regexp_insert_record(text):
+def regexp_insert_record(text, posix_date):
     for reg in regs:
         found = re.search(reg, text, re.M | re.I)
         if found:
@@ -20,20 +20,20 @@ def regexp_insert_record(text):
             come = True
         else:
             come = False
-        if command[1].lower() == "общее":
+        if command[2].lower() == "общее":
             type_cat = categories[0]
-        elif command[1].lower() == "еда":
+        elif command[2].lower() == "еда":
             type_cat = categories[1]
-        elif command[1].lower() == "транспорт":
+        elif command[2].lower() == "транспорт":
             type_cat = categories[2]
-        elif command[1].lower() == "бытовые":
+        elif command[2].lower() == "бытовые":
             type_cat = categories[3]
-        elif command[1].lower() == "зарплата":
+        elif command[2].lower() == "зарплата":
             type_cat = categories[4]
         else:
             type_cat = categories[0]
-        posix_date = 1635878220
-        reserve_date = datetime.datetime.utcfromtimestamp(posix_date)
+        #reserve_date = datetime.datetime.utcfromtimestamp(int(posix_date))
+        reserve_date = posix_date
         if command[3] is not None:
             date = datetime.datetime.strptime(command[3], '%d.%m.%Y')
         else:
