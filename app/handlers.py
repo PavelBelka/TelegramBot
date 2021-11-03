@@ -2,14 +2,14 @@ from aiogram import types
 from aiogram.dispatcher.filters import CommandStart, CommandHelp, RegexpCommandsFilter
 from preload import dp, db
 from middleware.throttling import rate_limit
-from app.regexp import command_record
+from app.regexp import regs, regexp_insert_record
+
 
 @dp.message_handler(CommandStart())
 @rate_limit(4, 'start')
 async def send_welcome(message: types.Message):
     conect = await db.create_connection()
     cur = db.create_cursor(conect)
-    print(str(message.from_user.id))
     verify = await db.verify_table(cur, str(message.from_user.id))
     if verify:
         await message.answer("{user}, Вы уже добавлены!".format(user=message.from_user.full_name))
@@ -27,6 +27,13 @@ async def send_help(message: types.Message):
                          "1. /start - начать работу,\n"
                          "2. /help - помощь")
 
-@dp.message_handler(regexp=command_record)
+@dp.message_handler(regexp=regs[0])
 async def record(message: types.Message):
-    await message.answer("Внес запись: {}".format(message.text))
+    try:
+        conect = await db.create_connection()
+        cur = db.create_cursor(conect)
+        inc, categ, clock, amo = regexp_insert_record(message.text)
+        await db.insert_record(cur, str(message.from_user.id), clock, inc, categ, amo)
+        await message.answer("Внес запись: {}".format(message.text))
+    except:
+        await message.answer("Не удалось внести запись!")
