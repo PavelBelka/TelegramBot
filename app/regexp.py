@@ -50,4 +50,4 @@ def regexp_insert_record(text):
             print("result_date: ", result_date)
         return come, type_cat, result_date, command[1]
     else:
-        print("Ошибка выдачи комманды")
+        raise IncorrectlySetCommandKeys()

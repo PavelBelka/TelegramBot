@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import types
 from aiogram.dispatcher.filters import CommandStart, CommandHelp, RegexpCommandsFilter
 from preload import dp, db
@@ -35,5 +37,6 @@ async def record(message: types.Message):
         inc, categ, clock, amo = regexp_insert_record(message.text)
         await db.insert_record(cur, str(message.from_user.id), clock, inc, categ, amo)
         await message.answer("Внес запись: {}".format(message.text))
-    except:
+    except Exception:
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record=message.text.")
         await message.answer("Не удалось внести запись!")
