@@ -1,4 +1,7 @@
 import datetime, re
+import time
+import pytz
+
 from app.exceptions import IncorrectlySetCommandKeys
 
 categories = ("Common", "Food", "Transport", "Utilities", "Salary")
@@ -6,7 +9,7 @@ regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+'
             r'(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.([0-9]{4})', r'(([01][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$')
 command = list()
 
-def regexp_insert_record(text, posix_date):
+def regexp_insert_record(text, posix_date: datetime.datetime):
     for reg in regs:
         found = re.search(reg, text, re.M | re.I)
         if found:
@@ -33,11 +36,14 @@ def regexp_insert_record(text, posix_date):
         else:
             type_cat = categories[0]
         #reserve_date = datetime.datetime.utcfromtimestamp(int(posix_date))
-        reserve_date = posix_date
+        local = pytz.timezone("Europe/Moscow")
+        local_dt = local.localize(posix_date, is_dst=None)
+        utc_date = local_dt.astimezone(pytz.utc)
+        reserve_date = utc_date.replace(tzinfo=None)
         if command[3] is not None:
-            date = datetime.datetime.strptime(command[3], '%d.%m.%Y')
+            date_d = datetime.datetime.strptime(command[3], '%d.%m.%Y')
         else:
-            date = datetime.datetime.combine(reserve_date.date(), datetime.time.min)
+            date_d = datetime.datetime.combine(reserve_date.date(), datetime.time.min)
 
         if command[4] is not None:
             time_d = datetime.datetime.strptime(command[4], '%H:%M:%S')
@@ -47,7 +53,7 @@ def regexp_insert_record(text, posix_date):
             result_date = reserve_date
             print("reserve_date: ", result_date)
         else:
-            result_date = datetime.datetime.combine(date.date(), time_d.time())
+            result_date = datetime.datetime.combine(date_d.date(), time_d.time())
             print("result_date: ", result_date)
         return come, type_cat, result_date, command[1]
     else:
