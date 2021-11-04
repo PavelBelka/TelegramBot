@@ -5,7 +5,7 @@ from db.Database import Database
 
 loop = asyncio.get_event_loop()
 print(loop.get_debug())
-new_bot = Bot(token="2008283464:AAFvmqKxp6XJQhGD7cKx2VE55FBKo6qV628")
+new_bot = Bot(token="2008283464:AAGD8GA-sDC2jYEAypOs-PKTsym3wm2yx_c")
 storage = MemoryStorage()
 dp = Dispatcher(new_bot, storage=storage, loop=loop)
 db = Database()
