@@ -6,9 +6,9 @@ from app.exceptions import IncorrectlySetCommandKeys
 categories = ("Common", "Food", "Transport", "Utilities", "Salary")
 regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+', r'(Общее|Еда|Транспорт|Бытовые|Зарплата)',
             r'(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.([0-9]{4})', r'(([01][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$')
-command = list()
 
 def regexp_insert_record(text, posix_date: datetime.datetime):
+    command = list()
     for reg in regs:
         found = re.search(reg, text, re.M | re.I)
         if found:
@@ -57,6 +57,8 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
         else:
             result_date = datetime.datetime.combine(date_d.date(), time_d.time())
             print("result_date: ", result_date)
-        return come, type_cat, result_date, command[1]
+        ammo = command[1]
+        del command
+        return come, type_cat, result_date, ammo
     else:
         raise IncorrectlySetCommandKeys

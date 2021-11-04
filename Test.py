@@ -79,7 +79,7 @@ async def main():
         #else:
          #   print("Ошибка выдачи комманды")
         #print(command)
-        data = await test.select_records_date(cur, '1271198784', "2021-11-04 12:40:00", "2021-11-04 17:43:00")
+        data = await test.select_records_date(cur, 'test2', "2021-10-24 12:40:00", "2021-11-04 17:43:00")
         print(data)
         #test.update_record(cur, 'test', datetime.datetime.strptime("2021-10-19 18:38:45.159014", '%Y-%m-%d %H:%M:%S.%f'), False, categories[0], 600, 1)
         #test.delete_record(cur, 'test', 9)

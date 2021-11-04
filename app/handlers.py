@@ -99,7 +99,7 @@ async def delete_record_choice_amount(message: types.Message, state: FSMContext)
         data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
         await db.delete_connection(connect)
         await DeleteRecord.next()
-        await message.answer("Выберите номер записи: ", data)
+        await message.answer("Выберите номер записи: {data}".format(data= data))
 
 @dp.message_handler(state=DeleteRecord.waiting_choice_record)
 async def delete_record_choice_number(message: types.Message, state: FSMContext):
