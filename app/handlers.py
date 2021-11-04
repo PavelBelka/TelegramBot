@@ -43,5 +43,5 @@ async def record(message: types.Message):
     except IncorrectlySetCommandKeys:
         await message.answer("Неверная запись! Проверьте и запишите снова.")
     except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
-        logging.exception(f"Database write error: user_id={message.from_user.id}; record=message.text.")
-        await message.answer("Не удалось внести запись!")
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
+        await message.answer("Упс, что-то пошло не так при добавлении записи...")

@@ -1,5 +1,4 @@
 import datetime, re
-import time
 import pytz
 
 from app.exceptions import IncorrectlySetCommandKeys
@@ -23,16 +22,19 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
             come = True
         else:
             come = False
-        if command[2].lower() == "общее":
-            type_cat = categories[0]
-        elif command[2].lower() == "еда":
-            type_cat = categories[1]
-        elif command[2].lower() == "транспорт":
-            type_cat = categories[2]
-        elif command[2].lower() == "бытовые":
-            type_cat = categories[3]
-        elif command[2].lower() == "зарплата":
-            type_cat = categories[4]
+        if command[2] is not None:
+            if command[2].lower() == "общее":
+                type_cat = categories[0]
+            elif command[2].lower() == "еда":
+                type_cat = categories[1]
+            elif command[2].lower() == "транспорт":
+                type_cat = categories[2]
+            elif command[2].lower() == "бытовые":
+                type_cat = categories[3]
+            elif command[2].lower() == "зарплата":
+                type_cat = categories[4]
+            else:
+                type_cat = categories[0]
         else:
             type_cat = categories[0]
         #reserve_date = datetime.datetime.utcfromtimestamp(int(posix_date))
