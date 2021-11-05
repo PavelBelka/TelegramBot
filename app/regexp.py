@@ -4,7 +4,7 @@ import pytz
 from app.exceptions import IncorrectlySetCommandKeys
 
 categories = ("Common", "Food", "Transport", "Utilities", "Salary")
-regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+', r'(Общее|Еда|Транспорт|Бытовые|Зарплата)',
+regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+', r'(Прочее|Еда|Транспорт|Бытовые|Зарплата)',
             r'(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.([0-9]{4})', r'(([01][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$')
 
 
@@ -26,7 +26,7 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
         else:
             come = False
         if command[2] is not None:
-            if command[2].lower() == "общее":
+            if command[2].lower() == "прочее":
                 type_cat = categories[0]
             elif command[2].lower() == "еда":
                 type_cat = categories[1]
@@ -107,7 +107,7 @@ def generate_output_string(data):
             operate = "Расход"
         if item[3] is not None:
             if item[3] == categories[0]:
-                type_cat = "общее"
+                type_cat = "прочее"
             elif item[3] == categories[1]:
                 type_cat = "еда"
             elif item[3] == categories[2]:
@@ -117,8 +117,8 @@ def generate_output_string(data):
             elif item[3] == categories[4]:
                 type_cat = "зарплата"
             else:
-                type_cat = "общее"
+                type_cat = "прочее"
         else:
-            type_cat = "общее"
+            type_cat = "прочее"
         str_d += f"{item[0]}. {operate} c:{item[4]} {type_cat} {item[1].strftime('%d.%m.%Y %H:%M:%S')}\n"
     return str_d

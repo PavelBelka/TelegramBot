@@ -6,11 +6,12 @@ from aiogram.dispatcher import FSMContext
 from psycopg.errors import OperationalError, DataError, DatabaseError, ProgrammingError, InternalError
 
 from preload import dp, db
-from states import UpdateRecord, DeleteRecord
+from states import UpdateRecord, DeleteRecord, BalanceCalculation
 from middleware.throttling import rate_limit
 from app.exceptions import IncorrectlySetCommandKeys
 from app.regexp import regs, regexp_insert_record, regexp_check_number, regexp_search_time,regexp_check_time_unit, \
                        generate_output_string
+from app.calculate import calculate_amount
 
 @dp.message_handler(regexp=regs[0])
 async def record(message: types.Message):
@@ -77,11 +78,11 @@ async def delete_record_choice_number(message: types.Message, state: FSMContext)
         cur = db.create_cursor(connect)
         await db.delete_record(cur, str(message.from_user.id), int(check))
         await message.answer("Запись удалена!")
-        await state.finish()
     except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
         logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
         await message.answer("Упс, что-то пошло не так. Выпоните команду /cancel , а затем попробуйте снова")
     finally:
+        await state.finish()
         await db.delete_connection(connect)
 
 @dp.message_handler(commands=['update'])
@@ -149,6 +150,45 @@ async def record(message: types.Message, state: FSMContext):
         logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
         await message.answer("Упс, что-то пошло не так при изменении записи. Попробуйте снова.")
     finally:
+        await state.finish()
+        await db.delete_connection(connect)
+
+@dp.message_handler(commands=['balance'])
+@rate_limit(4, 'delete')
+async def balance(message: types.Message):
+    await message.answer("Выберите единицу размерности времени (минута, час, день, неделя, месяц, год):")
+    await BalanceCalculation.waiting_unit_of_time.set()
+
+@dp.message_handler(state=BalanceCalculation.waiting_unit_of_time)
+async def balance_choice_unit(message: types.Message, state: FSMContext):
+    check = regexp_check_time_unit(message.text)
+    if not check:
+        await message.answer("Пожайлуста, проверьте корректность введенных данных.")
+        return
+    await state.update_data(chosen_unit=message.text.lower())
+    await BalanceCalculation.next()
+    await message.answer("Укажите значение:")
+
+@dp.message_handler(state=BalanceCalculation.waiting_amount_of_time)
+async def balance_choice_amount(message: types.Message, state: FSMContext):
+    check = regexp_check_number(message.text)
+    if not check:
+        await message.answer("Неверно задано число. Попробуйте еще раз.")
+        return
+    unit = await state.get_data()
+    try:
+        connect = await db.create_connection()
+        cur = db.create_cursor(connect)
+        current_time = datetime.datetime.utcnow()
+        past_time = regexp_search_time(unit['chosen_unit'], check, current_time)
+        data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
+        string_data = calculate_amount(data, current_time, int(check), unit['chosen_unit'])
+        await message.answer("{data}".format(data=string_data))
+    except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
+        await message.answer("Упс, что-то пошло не так. Выпоните команду /cancel , а затем попробуйте снова")
+    finally:
+        await state.finish()
         await db.delete_connection(connect)
 
 
