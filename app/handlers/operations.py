@@ -8,10 +8,8 @@ from psycopg.errors import OperationalError, DataError, DatabaseError, Programmi
 from preload import dp, db
 from states import UpdateRecord, DeleteRecord, BalanceCalculation
 from middleware.throttling import rate_limit
-from app.exceptions import IncorrectlySetCommandKeys
-from app.regexp import regs, regexp_insert_record, regexp_check_number, regexp_search_time,regexp_check_time_unit, \
-                       generate_output_string
-from app.calculate import calculate_amount
+from app.utils import *
+
 
 @dp.message_handler(regexp=regs[0])
 async def record(message: types.Message):

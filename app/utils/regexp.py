@@ -1,14 +1,7 @@
 import datetime, re
 import pytz
 
-from app.exceptions import IncorrectlySetCommandKeys
-
-categories = ("Common", "Food", "Transport", "Utilities", "Salary")
-regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+', r'(Прочее|Еда|Транспорт|Бытовые|Зарплата)',
-            r'(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.([0-9]{4})', r'(([01][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$')
-
-
-time_regs = r'(минута|час|день|неделя|месяц|год)'
+from app.utils import regs, categories, time_regs, IncorrectlySetCommandKeys
 
 def regexp_insert_record(text, posix_date: datetime.datetime):
     command = list()
@@ -28,12 +21,14 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
         if command[2] is not None:
             if command[2].lower() == "прочее":
                 type_cat = categories[0]
-            elif command[2].lower() == "еда":
+            elif command[2].lower() == "питание":
                 type_cat = categories[1]
-            elif command[2].lower() == "транспорт":
+            elif command[2].lower() == "проезд":
                 type_cat = categories[2]
-            elif command[2].lower() == "бытовые":
+            elif command[2].lower() == "квартплата":
                 type_cat = categories[3]
+            elif command[2].lower() == "медицина":
+                type_cat = categories[4]
             elif command[2].lower() == "зарплата":
                 type_cat = categories[4]
             else:
@@ -109,11 +104,13 @@ def generate_output_string(data):
             if item[3] == categories[0]:
                 type_cat = "прочее"
             elif item[3] == categories[1]:
-                type_cat = "еда"
+                type_cat = "питание"
             elif item[3] == categories[2]:
-                type_cat = "транспорт"
+                type_cat = "проезд"
             elif item[3] == categories[3]:
-                type_cat = "бытовые"
+                type_cat = "квартплата"
+            elif item[3] == categories[4]:
+                type_cat = "медицина"
             elif item[3] == categories[4]:
                 type_cat = "зарплата"
             else:

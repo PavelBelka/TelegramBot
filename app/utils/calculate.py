@@ -1,8 +1,6 @@
 import datetime
 
-from app.regexp import categories
-
-categories_output = ('Прочее', 'Еда', 'Транспорт', 'Бытовые', 'Зарплата')
+from app.utils import categories, categories_output
 
 def calculate_amount(data, time: datetime.datetime, number, unit):
     amount = {categories[0]: 0, categories[1]: 0, categories[2]: 0, categories[3]: 0, categories[4]: 0,
@@ -21,16 +19,16 @@ def calculate_amount(data, time: datetime.datetime, number, unit):
             amount[categories[0]] += sum_operate
         amount['balance'] += sum_operate
     str_d += f'''Информация по балансу за {time.strftime('%d.%m.%Y %H:%M:%S')}
-========================\n
+================================\n
 За {number} {unit}:
-Общий доход составил: {amount['total_income']}
-Общий расход составил:{amount['total_expense']}
-Из него:
-- {categories_output[0]}: {amount[categories[0]]}
+Доходы составили: {amount['total_income']}
+Расходы составили:{amount['total_expense']},
+Из них:
 - {categories_output[1]}: {amount[categories[1]]}
 - {categories_output[2]}: {amount[categories[2]]}
-- {categories_output[3]}: {amount[categories[3]]}\n
-=======================
+- {categories_output[3]}: {amount[categories[3]]}
+- {categories_output[0]}: {amount[categories[0]]}\n
+===============================
 Баланс: {amount['balance']}
 '''
     return str_d
