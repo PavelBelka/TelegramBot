@@ -1,6 +1,5 @@
 import datetime
 import logging
-import re
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -11,7 +10,8 @@ from psycopg.errors import OperationalError, DataError, DatabaseError, Programmi
 from preload import dp, db
 from states.delete_record import DeleteRecord
 from middleware.throttling import rate_limit
-from app.regexp import regs, regexp_insert_record
+from app.regexp import regs, regexp_insert_record, regexp_check_number, regexp_search_time,regexp_check_time_unit, \
+                       generate_output_string
 
 
 @dp.message_handler(CommandStart())
@@ -32,9 +32,31 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(CommandHelp())
 @rate_limit(4, 'help')
 async def send_help(message: types.Message):
-    await message.answer("Список комманд для управления:\n"
-                         "1. /start - начать работу,\n"
-                         "2. /help - помощь")
+    await message.answer(''' Помощь\n
+Чтобы внести свой расход или доход нужно написать следующую фразу:\n
+Расход с:600 еда 04.11.2021 22:58:00\n
+Расшифровка команд приведенной выше фразы:
+- Расход  - тип проведенной операции. Обязательный параметр.
+Для записи о том, что вы произвели расход подходят следующие фразы: Расход, Оплата, Покупка.
+Соответственно, для записи о доходе нужно написать Доход.
+- c:600 - сумма вашего расхода или дохода. Обязательный параметр.
+Пишется так: с:сумма_операции.
+- еда - категория, в которой была произведена операция. Необязательный параметр.
+Всего категорий несколько: Общее, Еда, Транспорт, Бытовые, Зарплата.
+Если пропустить этот параметр, то операции автоматически присвоится категория Общее.
+- 04.11.2021 - дата вашей операции. Необязательный параметр.
+Если пропустить этот параметр, то будет использована дата отправки сообщения боту.
+- 22:58:00 - время вашей операции. Необязательный параметр.
+Следует учесть, что время записывается по UTC, а не по местному времени.
+Если пропустить этот параметр, то будет использована время отправки сообщения боту.
+\n
+---------------------------------
+\n
+Список команд для управления:
+1. /start - начать работу,
+2. /help - помощь,
+3. /cancel - отмена действия. Работает только с /delete,
+4. /delete - удаление ненужной записи''')
 
 @dp.message_handler(regexp=regs[0])
 async def record(message: types.Message):
@@ -65,7 +87,8 @@ async def delete_record(message: types.Message):
 
 @dp.message_handler(state=DeleteRecord.waiting_unit_of_time)
 async def delete_record_choice_unit(message: types.Message, state: FSMContext):
-    if message.text.lower() not in ['минута', 'час', 'день', 'неделя', 'месяц', 'год']:
+    check = regexp_check_time_unit(message.text)
+    if not check:
         await message.answer("Пожайлуста, проверьте корректность введенных данных.")
         return
     await state.update_data(chosen_unit=message.text.lower())
@@ -74,46 +97,33 @@ async def delete_record_choice_unit(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=DeleteRecord.waiting_amount_of_time)
 async def delete_record_choice_amount(message: types.Message, state: FSMContext):
-    found = re.search(r'\d+', message.text, re.M | re.I)
-    if not found:
+    check = regexp_check_number(message.text)
+    if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")
         return
-    else:
-        unit = await state.get_data()
-        connect = await db.create_connection()
-        cur = db.create_cursor(connect)
-        current_time = datetime.datetime.utcnow()
-        if unit['chosen_unit'] == 'минута':
-            delta_t = datetime.timedelta(minutes= int(found.group()))
-        elif unit['chosen_unit'] == 'час':
-            delta_t = datetime.timedelta(hours= int(found.group()))
-        elif unit['chosen_unit'] == 'день':
-            delta_t = datetime.timedelta(days= int(found.group()))
-        elif unit['chosen_unit'] == 'неделя':
-            delta_t = datetime.timedelta(days= 7 * int(found.group()))
-        elif unit['chosen_unit'] == 'месяц':
-            delta_t = datetime.timedelta(days= 30 * int(found.group()))
-        elif unit['chosen_unit'] == 'год':
-            delta_t = datetime.timedelta(days= 360 * int(found.group()))
-        past_time = current_time - delta_t
-        data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
-        await db.delete_connection(connect)
-        await DeleteRecord.next()
-        await message.answer("Выберите номер записи: {data}".format(data= data))
+    unit = await state.get_data()
+    connect = await db.create_connection()
+    cur = db.create_cursor(connect)
+    current_time = datetime.datetime.utcnow()
+    past_time = regexp_search_time(unit['chosen_unit'], check, current_time)
+    data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
+    list_record = generate_output_string(data)
+    await db.delete_connection(connect)
+    await DeleteRecord.next()
+    await message.answer("Выберите номер записи:\n {data}".format(data= list_record))
 
 @dp.message_handler(state=DeleteRecord.waiting_choice_record)
 async def delete_record_choice_number(message: types.Message, state: FSMContext):
-    found = re.search(r'\d+', message.text, re.M | re.I)
-    if not found:
+    check = regexp_check_number(message.text)
+    if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")
         return
-    else:
-        connect = await db.create_connection()
-        cur = db.create_cursor(connect)
-        await db.delete_record(cur, str(message.from_user.id), int(found.group()))
-        await message.answer("Запись удалена!")
-        await state.finish()
-        await db.delete_connection(connect)
+    connect = await db.create_connection()
+    cur = db.create_cursor(connect)
+    await db.delete_record(cur, str(message.from_user.id), int(check))
+    await message.answer("Запись удалена!")
+    await state.finish()
+    await db.delete_connection(connect)
 
 
 

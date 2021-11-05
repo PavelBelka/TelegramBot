@@ -7,6 +7,9 @@ categories = ("Common", "Food", "Transport", "Utilities", "Salary")
 regs = (r'(Оплата|Покупка|Доход|Расход)', r'(?<=с:)\d+', r'(Общее|Еда|Транспорт|Бытовые|Зарплата)',
             r'(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.([0-9]{4})', r'(([01][0-9])|(2[0-3])):[0-5][0-9]:[0-5][0-9]$')
 
+
+time_regs = r'(минута|час|день|неделя|месяц|год)'
+
 def regexp_insert_record(text, posix_date: datetime.datetime):
     command = list()
     for reg in regs:
@@ -62,3 +65,60 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
         return come, type_cat, result_date, ammo
     else:
         raise IncorrectlySetCommandKeys
+
+def regexp_check_number(number):
+    found = re.search(r'\d+', number, re.M | re.I)
+    if found:
+        return found.group()
+    else:
+        return None
+
+def regexp_search_time(text, time, current_time):
+    if text.lower() == 'минута':
+        delta_t = datetime.timedelta(minutes= int(time))
+    elif text.lower() == 'час':
+        delta_t = datetime.timedelta(hours= int(time))
+    elif text.lower() == 'день':
+        delta_t = datetime.timedelta(days= int(time))
+    elif text.lower() == 'неделя':
+        delta_t = datetime.timedelta(days= 7 * int(time))
+    elif text.lower() == 'месяц':
+        delta_t = datetime.timedelta(days= 30 * int(time))
+    elif text.lower() == 'год':
+        delta_t = datetime.timedelta(days= 360 * int(time))
+    else:
+        delta_t = 0
+    past_time = current_time - delta_t
+    return past_time
+
+def regexp_check_time_unit(text):
+    found = re.search(time_regs, text, re.M | re.I)
+    if found:
+        return found.group()
+    else:
+        return None
+
+def generate_output_string(data):
+    str_d=""
+    for item in data:
+        if item[2]:
+            operate = "Расход"
+        else:
+            operate = "Доход"
+        if item[3] is not None:
+            if item[3] == categories[0]:
+                type_cat = "общее"
+            elif item[3] == categories[1]:
+                type_cat = "еда"
+            elif item[3] == categories[2]:
+                type_cat = "транспорт"
+            elif item[3] == categories[3]:
+                type_cat = "бытовые"
+            elif item[3] == categories[4]:
+                type_cat = "зарплата"
+            else:
+                type_cat = "общее"
+        else:
+            type_cat = "общее"
+        str_d += f"{item[0]}. {operate} c:{item[4]} {type_cat} {item[1].strftime('%d.%m.%Y %H:%M:%S')}\n"
+    return str_d
