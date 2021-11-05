@@ -1,4 +1,3 @@
-from .handlers import dp
-from .regexp import regs
+from .handlers import dp, db
 
-__all__ = ["dp"]
+__all__ = ['dp', 'db']

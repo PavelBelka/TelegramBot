@@ -33,7 +33,7 @@ if __name__ == '__main__':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     try:
         from preload import loop, new_bot
-        from app.handlers import dp, db
+        from app import dp, db
         loop.create_task(database_startup(db))
         executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
     finally:
