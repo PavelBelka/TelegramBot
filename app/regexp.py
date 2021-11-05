@@ -102,9 +102,9 @@ def generate_output_string(data):
     str_d=""
     for item in data:
         if item[2]:
-            operate = "Расход"
-        else:
             operate = "Доход"
+        else:
+            operate = "Расход"
         if item[3] is not None:
             if item[3] == categories[0]:
                 type_cat = "общее"

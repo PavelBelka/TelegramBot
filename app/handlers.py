@@ -9,6 +9,7 @@ from app.exceptions import IncorrectlySetCommandKeys
 from psycopg.errors import OperationalError, DataError, DatabaseError, ProgrammingError, InternalError
 from preload import dp, db
 from states.delete_record import DeleteRecord
+from states.update_record import UpdateRecord
 from middleware.throttling import rate_limit
 from app.regexp import regs, regexp_insert_record, regexp_check_number, regexp_search_time,regexp_check_time_unit, \
                        generate_output_string
@@ -102,15 +103,20 @@ async def delete_record_choice_amount(message: types.Message, state: FSMContext)
         await message.answer("Неверно задано число. Попробуйте еще раз.")
         return
     unit = await state.get_data()
-    connect = await db.create_connection()
-    cur = db.create_cursor(connect)
-    current_time = datetime.datetime.utcnow()
-    past_time = regexp_search_time(unit['chosen_unit'], check, current_time)
-    data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
-    list_record = generate_output_string(data)
-    await db.delete_connection(connect)
-    await DeleteRecord.next()
-    await message.answer("Выберите номер записи:\n {data}".format(data= list_record))
+    try:
+        connect = await db.create_connection()
+        cur = db.create_cursor(connect)
+        current_time = datetime.datetime.utcnow()
+        past_time = regexp_search_time(unit['chosen_unit'], check, current_time)
+        data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
+        list_record = generate_output_string(data)
+        await DeleteRecord.next()
+        await message.answer("Выберите номер записи:\n {data}".format(data=list_record))
+    except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
+        await message.answer("Упс, что-то пошло не так. Выпоните команду /cancel , а затем попробуйте снова")
+    finally:
+        await db.delete_connection(connect)
 
 @dp.message_handler(state=DeleteRecord.waiting_choice_record)
 async def delete_record_choice_number(message: types.Message, state: FSMContext):
@@ -118,12 +124,84 @@ async def delete_record_choice_number(message: types.Message, state: FSMContext)
     if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")
         return
-    connect = await db.create_connection()
-    cur = db.create_cursor(connect)
-    await db.delete_record(cur, str(message.from_user.id), int(check))
-    await message.answer("Запись удалена!")
-    await state.finish()
-    await db.delete_connection(connect)
+    try:
+        connect = await db.create_connection()
+        cur = db.create_cursor(connect)
+        await db.delete_record(cur, str(message.from_user.id), int(check))
+        await message.answer("Запись удалена!")
+        await state.finish()
+    except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
+        await message.answer("Упс, что-то пошло не так. Выпоните команду /cancel , а затем попробуйте снова")
+    finally:
+        await db.delete_connection(connect)
+
+@dp.message_handler(commands=['update'])
+@rate_limit(4, 'delete')
+async def update_record(message: types.Message):
+    await message.answer("Выберите единицу размерности времени (минута, час, день, неделя, месяц, год):")
+    await UpdateRecord.waiting_unit_of_time.set()
+
+@dp.message_handler(state=UpdateRecord.waiting_unit_of_time)
+async def update_record_choice_unit(message: types.Message, state: FSMContext):
+    check = regexp_check_time_unit(message.text)
+    if not check:
+        await message.answer("Пожайлуста, проверьте корректность введенных данных.")
+        return
+    await state.update_data(chosen_unit=message.text.lower())
+    await UpdateRecord.next()
+    await message.answer("Укажите значение:")
+
+@dp.message_handler(state=UpdateRecord.waiting_amount_of_time)
+async def update_record_choice_amount(message: types.Message, state: FSMContext):
+    check = regexp_check_number(message.text)
+    if not check:
+        await message.answer("Неверно задано число. Попробуйте еще раз.")
+        return
+    unit = await state.get_data()
+    try:
+        connect = await db.create_connection()
+        cur = db.create_cursor(connect)
+        current_time = datetime.datetime.utcnow()
+        past_time = regexp_search_time(unit['chosen_unit'], check, current_time)
+        data = await db.select_records_date(cur, str(message.from_user.id), past_time, current_time)
+        list_record = generate_output_string(data)
+        await UpdateRecord.next()
+        await message.answer("Выберите номер записи:\n {data}".format(data=list_record))
+    except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
+        await message.answer("Упс, что-то пошло не так. Выпоните команду /cancel , а затем попробуйте снова")
+    finally:
+        await db.delete_connection(connect)
+
+@dp.message_handler(state=UpdateRecord.waiting_choice_record)
+async def update_record_choice_number(message: types.Message, state: FSMContext):
+    check = regexp_check_number(message.text)
+    if not check:
+        await message.answer("Неверно задано число. Попробуйте еще раз.")
+        return
+    await state.update_data(chosen_number=int(check))
+    await UpdateRecord.next()
+    await message.answer("Теперь можете изменить запись:")
+
+@dp.message_handler(state=UpdateRecord.waiting_new_record)
+async def record(message: types.Message, state: FSMContext):
+    try:
+        inc, categ, clock, amo = regexp_insert_record(message.text, message.date)
+    except IncorrectlySetCommandKeys:
+        await message.answer("Неверная запись! Проверьте и запишите снова.")
+        return
+    try:
+        index = await state.get_data()
+        connect = await db.create_connection()
+        cur = db.create_cursor(connect)
+        await db.update_record(cur, str(message.from_user.id), clock, inc, categ, amo, index['chosen_number'])
+        await message.answer("Изменил запись: {}".format(message.text))
+    except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
+        logging.exception(f"Database write error: user_id={message.from_user.id}; record={message.text}")
+        await message.answer("Упс, что-то пошло не так при изменении записи. Попробуйте снова.")
+    finally:
+        await db.delete_connection(connect)
 
 
 
