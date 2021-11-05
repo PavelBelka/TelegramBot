@@ -1,6 +1,6 @@
 import datetime
 
-from app.utils import categories, categories_output
+from app.utils.regexp import categories, categories_output
 
 def calculate_amount(data, time: datetime.datetime, number, unit):
     amount = {categories[0]: 0, categories[1]: 0, categories[2]: 0, categories[3]: 0, categories[4]: 0,
@@ -27,6 +27,7 @@ def calculate_amount(data, time: datetime.datetime, number, unit):
 - {categories_output[1]}: {amount[categories[1]]}
 - {categories_output[2]}: {amount[categories[2]]}
 - {categories_output[3]}: {amount[categories[3]]}
+- {categories_output[4]}: {amount[categories[4]]}
 - {categories_output[0]}: {amount[categories[0]]}\n
 ===============================
 Баланс: {amount['balance']}
