@@ -10,6 +10,7 @@ from states import UpdateRecord, DeleteRecord, BalanceCalculation
 from middleware.throttling import rate_limit
 from app.utils import *
 from app.utils.regexp import regs
+from app.utils.exceptions import IncorrectlySetCommandKeys
 
 
 @dp.message_handler(regexp=regs[0])

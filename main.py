@@ -1,14 +1,16 @@
 import logging, sys, asyncio, os
 from psycopg_pool import AsyncConnectionPool
 from aiogram import executor
+from configuration import config
 
 os.environ['PYTHONASYNCIODEBUG'] = '1'
 
 async def database_startup(dbs):
-    pool = AsyncConnectionPool(min_size=1, max_size=20, kwargs={"user": "telefinbot",
-                                                                "password": "Yakov2020",
-                                                                "host": "localhost",
-                                                                "dbname": "FinBot",
+    pool = AsyncConnectionPool(min_size=1, max_size=20, kwargs={"user": config.PGUSER,
+                                                                "password": config.PGPASSWORD,
+                                                                "host": config.PGHOST,
+                                                                "dbname": config.PGDBNAME,
+                                                                "port": config.PGPORT,
                                                                 "autocommit": "True"})
     dbs.create_pool(pool)
 
