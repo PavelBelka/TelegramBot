@@ -1,9 +1,7 @@
-import logging, sys, asyncio, os
+import logging, sys, asyncio
 from psycopg_pool import AsyncConnectionPool
 from aiogram import executor
 from configuration import config
-
-os.environ['PYTHONASYNCIODEBUG'] = '1'
 
 async def database_startup(dbs):
     pool = AsyncConnectionPool(min_size=1, max_size=20, kwargs={"user": config.PGUSER,
@@ -28,7 +26,7 @@ async def on_shutdown(dbs, bot, dispatcher):
 
 if __name__ == '__main__':
     logging.basicConfig(handlers=(logging.FileHandler('log.txt'), logging.StreamHandler()),
-                        level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
+                        level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
     logger = logging.getLogger(__name__)
     logger.info("----Start program----")
     if sys.platform == "win32" and sys.version_info.minor >= 8:
