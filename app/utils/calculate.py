@@ -18,9 +18,52 @@ def calculate_amount(data, time: datetime.datetime, number, unit):
         else:
             amount[categories[0]] += sum_operate
         amount['balance'] += sum_operate
+    digit = number % 10
+    if unit == 'минута':
+        if digit == 1 and number != 11:
+            case = 'минуту'
+        elif 1 < digit < 5 and not 11 < number < 15:
+            case = 'минуты'
+        else:
+            case = 'минут'
+    elif unit == 'час':
+        if digit == 1 and number != 11:
+            case = 'час'
+        elif 1 < digit < 5 and not 11 < number < 15:
+            case = 'часа'
+        else:
+            case = 'часов'
+    elif unit == 'день':
+        if digit == 1 and number != 11:
+            case = 'день'
+        elif 1 < digit < 5 and not 11 < number < 15:
+            case = 'дня'
+        else:
+            case = 'дней'
+    elif unit == 'неделя':
+        if digit == 1 and number != 11:
+            case = 'неделю'
+        elif 1 < digit < 5 and not 11 < number < 15:
+            case = 'недели'
+        else:
+            case = 'недель'
+    elif unit == 'месяц':
+        if digit == 1 and number != 11:
+            case = 'месяц'
+        elif 1 < digit < 5 and not 11 < number < 15:
+            case = 'месяца'
+        else:
+            case = 'месяцев'
+    else:
+        if digit == 1 and number != 11:
+            case = 'год'
+        elif 1 < digit < 5 and not 11 < number < 15:
+            case = 'года'
+        else:
+            case = 'лет'
     str_d += f'''Информация по балансу за {time.strftime('%d.%m.%Y %H:%M:%S')}
-================================\n
-За {number} {unit}:
+========================================\n
+За {number} {case}:
 Доходы составили: {amount['total_income']}
 Расходы составили:{amount['total_expense']},
 Из них:
@@ -29,7 +72,7 @@ def calculate_amount(data, time: datetime.datetime, number, unit):
 - {categories_output[3]}: {amount[categories[3]]}
 - {categories_output[4]}: {amount[categories[4]]}
 - {categories_output[0]}: {amount[categories[0]]}\n
-===============================
+=======================================
 Баланс: {amount['balance']}
 '''
     return str_d
