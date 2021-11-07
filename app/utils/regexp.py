@@ -37,7 +37,7 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
             elif command[2].lower() == "медицина":
                 type_cat = categories[4]
             elif command[2].lower() == "зарплата":
-                type_cat = categories[4]
+                type_cat = categories[5]
             else:
                 type_cat = categories[0]
         else:
@@ -118,7 +118,7 @@ def generate_output_string(data):
                 type_cat = "квартплата"
             elif item[3] == categories[4]:
                 type_cat = "медицина"
-            elif item[3] == categories[4]:
+            elif item[3] == categories[5]:
                 type_cat = "зарплата"
             else:
                 type_cat = "прочее"
