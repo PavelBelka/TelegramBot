@@ -3,7 +3,7 @@ import datetime
 from app.utils.regexp import categories, categories_output
 
 def calculate_amount(data, time: datetime.datetime, number, unit):
-    amount = {categories[0]: 0, categories[1]: 0, categories[2]: 0, categories[3]: 0, categories[4]: 0,
+    amount = {categories[0]: 0, categories[1]: 0, categories[2]: 0, categories[3]: 0, categories[4]: 0, categories[5]: 0,
               'total_expense': 0, 'total_income': 0, 'balance': 0}
     str_d=""
     for item in data:
