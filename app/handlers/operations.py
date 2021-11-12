@@ -20,7 +20,10 @@ async def record(message: types.Message):
         cur = db.create_cursor(connect)
         inc, categ, clock, amo = regexp_insert_record(message.text, message.date)
         await db.insert_record(cur, str(message.from_user.id), clock, inc, categ, amo)
-        await message.answer("Внес запись: {}".format(message.text))
+        last_record = await db.select_last_record(cur, str(message.from_user.id))
+        first_str = "Внес запись: "
+        second_str = generate_output_string(last_record)
+        await message.answer(first_str + second_str[4:])
     except IncorrectlySetCommandKeys:
         await message.answer("Неверная запись! Проверьте и запишите снова.")
     except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):

@@ -66,3 +66,10 @@ class Database:
         update = '''UPDATE {} SET date=(%s), income=(%s), category=(%s), amount=(%s) WHERE id=(%s);'''
         query_update = sql.SQL(update).format(sql.Identifier('fin', name))
         await cursor.execute(query_update, (dat, income, category, amount, id_row))
+
+    @staticmethod
+    async def select_last_record(cursor, name):
+        order = '''SELECT * FROM {} ORDER BY id DESC LIMIT 1'''
+        query_order = sql.SQL(order).format(sql.Identifier('fin', name))
+        await cursor.execute(query_order)
+        return await cursor.fetchall()
