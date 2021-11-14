@@ -12,6 +12,8 @@ time_regs = r'(минута|час|день|неделя|месяц|год)'
 
 def regexp_insert_record(text, posix_date: datetime.datetime):
     command = list()
+    local = pytz.timezone("Europe/Moscow")
+    type_cat = None
     for reg in regs:
         found = re.search(reg, text, re.M | re.I)
         if found:
@@ -26,24 +28,12 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
         else:
             come = False
         if command[2] is not None:
-            if command[2].lower() == "прочее":
-                type_cat = categories[0]
-            elif command[2].lower() == "питание":
-                type_cat = categories[1]
-            elif command[2].lower() == "проезд":
-                type_cat = categories[2]
-            elif command[2].lower() == "квартплата":
-                type_cat = categories[3]
-            elif command[2].lower() == "медицина":
-                type_cat = categories[4]
-            elif command[2].lower() == "зарплата":
-                type_cat = categories[5]
-            else:
-                type_cat = categories[0]
+            for name in categories_output:
+                if command[2].lower() == name.lower():
+                    type_cat = categories[categories_output.index(name)]
         else:
             type_cat = categories[0]
         #reserve_date = datetime.datetime.utcfromtimestamp(int(posix_date))
-        local = pytz.timezone("Europe/Moscow")
         local_dt = local.localize(posix_date, is_dst=None)
         utc_date = local_dt.astimezone(pytz.utc)
         reserve_date = utc_date.replace(tzinfo=None)
@@ -101,6 +91,7 @@ def regexp_check_time_unit(text):
         return None
 
 def generate_output_string(data):
+    type_cat = None
     str_d=""
     for item in data:
         if item[2]:
@@ -108,21 +99,10 @@ def generate_output_string(data):
         else:
             operate = "Расход"
         if item[3] is not None:
-            if item[3] == categories[0]:
-                type_cat = "прочее"
-            elif item[3] == categories[1]:
-                type_cat = "питание"
-            elif item[3] == categories[2]:
-                type_cat = "проезд"
-            elif item[3] == categories[3]:
-                type_cat = "квартплата"
-            elif item[3] == categories[4]:
-                type_cat = "медицина"
-            elif item[3] == categories[5]:
-                type_cat = "зарплата"
-            else:
-                type_cat = "прочее"
+            for obj in categories:
+                if item[3] == obj:
+                    type_cat = categories_output[categories.index(obj)]
         else:
             type_cat = "прочее"
-        str_d += f"{item[0]}. {operate} c:{item[4]} {type_cat} {item[1].strftime('%d.%m.%Y %H:%M:%S')}\n"
+        str_d += f"{item[0]}. {operate} c{item[4]} {type_cat} {item[1].strftime('%d.%m.%Y %H:%M:%S')}\n"
     return str_d
