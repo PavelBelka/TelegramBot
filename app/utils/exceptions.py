@@ -2,3 +2,7 @@
 class IncorrectlySetCommandKeys(Exception):
     """Вызывается, когда в запросе на добавление отсутствует команда и сумма или они заданы неверно"""
     pass
+
+class TimeInFuture(Exception):
+    """Вызывается, когда в запросе указана дата, превышающая текущую"""
+    pass

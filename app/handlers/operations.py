@@ -10,11 +10,12 @@ from states import UpdateRecord, DeleteRecord, BalanceCalculation
 from middleware.throttling import rate_limit
 from app.utils import *
 from app.utils.regexp import regs
-from app.utils.exceptions import IncorrectlySetCommandKeys
+from app.utils.exceptions import IncorrectlySetCommandKeys, TimeInFuture
 
 
 @dp.message_handler(regexp=regs[0])
 async def record(message: types.Message):
+    connect = None
     try:
         connect = await db.create_connection()
         cur = db.create_cursor(connect)
@@ -24,6 +25,8 @@ async def record(message: types.Message):
         first_str = "Внес запись: "
         second_str = generate_output_string(last_record)
         await message.answer(first_str + second_str[4:])
+    except TimeInFuture:
+        await message.answer("Указанная в запросе дата больше текущей")
     except IncorrectlySetCommandKeys:
         await message.answer("Неверная запись! Проверьте и запишите снова.")
     except (OperationalError, DataError, DatabaseError, ProgrammingError, InternalError):
@@ -50,6 +53,7 @@ async def delete_record_choice_unit(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=DeleteRecord.waiting_amount_of_time)
 async def delete_record_choice_amount(message: types.Message, state: FSMContext):
+    connect = None
     check = regexp_check_number(message.text)
     if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")
@@ -72,6 +76,7 @@ async def delete_record_choice_amount(message: types.Message, state: FSMContext)
 
 @dp.message_handler(state=DeleteRecord.waiting_choice_record)
 async def delete_record_choice_number(message: types.Message, state: FSMContext):
+    connect = None
     check = regexp_check_number(message.text)
     if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")
@@ -106,6 +111,7 @@ async def update_record_choice_unit(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=UpdateRecord.waiting_amount_of_time)
 async def update_record_choice_amount(message: types.Message, state: FSMContext):
+    connect = None
     check = regexp_check_number(message.text)
     if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")
@@ -138,8 +144,12 @@ async def update_record_choice_number(message: types.Message, state: FSMContext)
 
 @dp.message_handler(state=UpdateRecord.waiting_new_record)
 async def record(message: types.Message, state: FSMContext):
+    connect = None
     try:
         inc, categ, clock, amo = regexp_insert_record(message.text, message.date)
+    except TimeInFuture:
+        await message.answer("Указанная в запросе дата больше текущей")
+        return
     except IncorrectlySetCommandKeys:
         await message.answer("Неверная запись! Проверьте и запишите снова.")
         return
@@ -174,6 +184,7 @@ async def balance_choice_unit(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=BalanceCalculation.waiting_amount_of_time)
 async def balance_choice_amount(message: types.Message, state: FSMContext):
+    connect = None
     check = regexp_check_number(message.text)
     if not check:
         await message.answer("Неверно задано число. Попробуйте еще раз.")

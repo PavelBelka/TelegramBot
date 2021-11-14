@@ -1,7 +1,7 @@
 import datetime, re
 import pytz
 
-from app.utils.exceptions import IncorrectlySetCommandKeys
+from app.utils.exceptions import IncorrectlySetCommandKeys, TimeInFuture
 
 categories_output = ('Прочее', 'Питание', 'Проезд', 'Квартплата', 'Медицина', 'Зарплата')
 categories = ("Common", "Food", "Transport", "Utilities","Medicine", "Salary")
@@ -39,6 +39,8 @@ def regexp_insert_record(text, posix_date: datetime.datetime):
         reserve_date = utc_date.replace(tzinfo=None)
         if command[3] is not None:
             date_d = datetime.datetime.strptime(command[3], '%d.%m.%Y')
+            if date_d > datetime.datetime.combine(reserve_date.date(), datetime.time.min):
+                raise TimeInFuture
         else:
             date_d = datetime.datetime.combine(reserve_date.date(), datetime.time.min)
 
